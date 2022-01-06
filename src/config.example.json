@@ -1,0 +1,52 @@
+{
+  "global_debug_flag": 1,
+  "global_log_flag": 1,
+  "tz": "Etc/UTC",
+  "lang": "zh-cn",
+  "api_id": 123456,
+  "api_hash": "1234567890abcdefghijklmnopqrstuvwxyz",
+  "bot_username": "genshin_bot",
+  "resin_cron_hours": "11-23",
+  "reward_cron_hour": 1,
+  "reward_cron_minute": 10,
+  "resin_warning_limit": 160,
+  "tg_chat_id": 123456,
+  "user_data": {
+    "dummy0": {
+      "_comment": "dummy",
+      "tg_uid": 123456,
+      "gs_uid": 123456,
+      "gs_cookie": {
+        "ltuid": 123456,
+        "ltoken": "1234567890abcdefghijklmnopqrstuvwxyz"
+      }
+    },
+    "dummy1": {
+      "_comment": "dummy",
+      "tg_uid": 123456,
+      "gs_uid": 123456,
+      "gs_cookie": {
+        "ltuid": 123456,
+        "ltoken": "1234567890abcdefghijklmnopqrstuvwxyz"
+      }
+    },
+    "dummy2": {
+      "_comment": "dummy",
+      "tg_uid": 123456,
+      "gs_uid": 123456,
+      "gs_cookie": {
+        "ltuid": 123456,
+        "ltoken": "1234567890abcdefghijklmnopqrstuvwxyz"
+      }
+    },
+    "dummy3": {
+      "_comment": "dummy",
+      "tg_uid": 123456,
+      "gs_uid": 123456,
+      "gs_cookie": {
+        "ltuid": 123456,
+        "ltoken": "1234567890abcdefghijklmnopqrstuvwxyz"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+
+.idea/
+
+venv/
+
+my_account.session
+
+config.json
+
+bot.log
