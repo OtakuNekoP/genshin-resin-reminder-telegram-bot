@@ -33,9 +33,10 @@ chat_id = config.get("tg_chat_id")
 
 lang = config.get("lang")
 resin_warning_limit = config.get("resin_warning_limit")
+coin_warning_limit = config.get("coin_warning_limit")
 bot_username = config.get("bot_username")
 
-resin_cron_hours = config.get("resin_cron_hours")
+checkall_cron_hours = config.get("checkall_cron_hours")
 reward_cron_hour = config.get("reward_cron_hour")
 reward_cron_minute = config.get("reward_cron_minute")
 
@@ -99,7 +100,7 @@ def checkResin(client: Client, message: Message):
     for user in config["user_data"]:
         try:
             if message.from_user.id == config["user_data"][user]["tg_uid"]:
-                debug_print(f" Checking for {user}")
+                debug_print(f" Checking resin for {user}")
                 setGsCookie(user)
                 try:
                     notes = gs.get_notes(config["user_data"][user]["gs_uid"])
@@ -120,6 +121,61 @@ def checkResin(client: Client, message: Message):
             time.sleep(e.x)
 
 
+# telegram user command handler - check my coin
+@bot_app.on_message(Filters.command("coin") | Filters.command("coin@"+bot_username))
+def debug_checkAll(client: Client, message: Message):
+    for user in config["user_data"]:
+        try:
+            if message.from_user.id == config["user_data"][user]["tg_uid"]:
+                debug_print(f" Checking coin for {user}")
+                setGsCookie(user)
+                try:
+                    notes = gs.get_notes(config["user_data"][user]["gs_uid"])
+                except NotLoggedIn as e:
+                    message.reply(f"查询失败[GS]")
+                    error_print(f"[GS] {user}'s cookies have not been provided.")
+                except TooManyRequests as e:
+                    error_print(f"[GS] {user} made too many requests and got ratelimited")
+                if notes['realm_currency'] is not None:
+                    message.reply(f"让我康康你的洞天宝钱有多少了: {notes['realm_currency']}/{notes['max_realm_currency']}")
+                    log_print(f" Coin check: {message.from_user.username}")
+                else:
+                    log_print(f" Coin check: failed")
+                debug_print(f" Checking coin for {user} finished")
+        except BadRequest as e:
+            error_print(f"[TG401] Coin check: {message.from_user.username}")
+        except FloodWait as e:
+            time.sleep(e.x)
+
+
+# telegram debug command handler - debug check all
+@bot_app.on_message(Filters.command("debug_checkall") | Filters.command("debug_checkall@"+bot_username))
+def debug_checkall(client: Client, message: Message):
+    try:
+        message.reply("DEBUG: CheckAll start!")
+        checkAllNotes()
+        message.reply("DEBUG: CheckAll finished!")
+        log_print(f" DEBUG CheckAll: {message.from_user.username}")
+    except BadRequest as e:
+        error_print(f"[TG400] DEBUG CheckAll: {message.from_user.username}")
+    except FloodWait as e:
+        time.sleep(e.x)
+
+
+# telegram debug command handler - debug claim all
+@bot_app.on_message(Filters.command("debug_claimall") | Filters.command("debug_claimall@"+bot_username))
+def debug_claimall(client: Client, message: Message):
+    try:
+        message.reply("DEBUG: ClaimAll start!")
+        claimAllDailyReward()
+        message.reply("DEBUG: ClaimAll finished!")
+        log_print(f" DEBUG ClaimAll: {message.from_user.username}")
+    except BadRequest as e:
+        error_print(f"[TG400] DEBUG ClaimAll: {message.from_user.username}")
+    except FloodWait as e:
+        time.sleep(e.x)
+
+
 def claimAllDailyReward():
     for user in config["user_data"]:
         debug_print(f" Claiming for {user}")
@@ -133,7 +189,7 @@ def claimAllDailyReward():
             except TooManyRequests as e:
                 error_print(f"[GS] {user} made too many requests and got ratelimited")
             if reward is not None:
-                bot_app.send_message(chat_id, f"{target_user.username} 每日帮你领好了: {reward['cnt']}x {reward['name']}")
+                bot_app.send_message(chat_id, f"{target_user.username} 每日领好啦: {reward['cnt']}x {reward['name']}")
                 log_print(f" Claimed daily reward - {reward['cnt']}x {reward['name']} {target_user.username}")
             else:
                 bot_app.send_message(chat_id, f"{target_user.username} 每日领不了")
@@ -146,7 +202,7 @@ def claimAllDailyReward():
     log_print(f" Claimed all!")
 
 
-def checkAllResin():
+def checkAllNotes():
     for user in config["user_data"]:
         debug_print(f" Checking for {user}")
         target_user = bot_app.get_users(config["user_data"][user]["tg_uid"])  # get user obj from tg
@@ -159,8 +215,11 @@ def checkAllResin():
             except TooManyRequests as e:
                 error_print(f"[GS] {user} made too many requests and got ratelimited")
             if notes['resin'] > resin_warning_limit:
-                bot_app.send_message(chat_id, f"@{target_user.username} 你他娘的树脂要溢出啦: {notes['resin']}/{notes['max_resin']}")
+                bot_app.send_message(chat_id, f"@{target_user.username} 树脂要溢出啦: {notes['resin']}/{notes['max_resin']}")
                 log_print(f" Resin reminder: {target_user.username}")
+            if notes['realm_currency'] > coin_warning_limit:
+                bot_app.send_message(chat_id, f"@{target_user.username} 洞天宝钱要溢出啦: {notes['realm_currency']}/{notes['max_realm_currency']}")
+                log_print(f" Coin reminder: {target_user.username}")
         except BadRequest as e:
             error_print(f"[TG400] Resin check: {target_user.username}")
         except FloodWait as e:
@@ -169,15 +228,14 @@ def checkAllResin():
     log_print(f" Checked all!")
 
 
-def tasklist():
-    # checkAllResin()  # check once at start
+def taskList():
     scheduler = BackgroundScheduler(timezone=tz)
-    scheduler.add_job(checkAllResin, trigger='cron', hour=resin_cron_hours, id='checkAllResin')  # check resin status every 2 hours
-    scheduler.add_job(claimAllDailyReward, trigger='cron', hour=reward_cron_hour, minute=reward_cron_minute, id='claimAllDailyReward')  # claim daily reward at 1800
+    scheduler.add_job(checkAllNotes, trigger='cron', hour=checkall_cron_hours, id='checkAllNotes')
+    scheduler.add_job(claimAllDailyReward, trigger='cron', hour=reward_cron_hour, minute=reward_cron_minute, id='claimAllDailyReward')
     scheduler.start()
 
 
-tasklist()
+taskList()
 
 print("\033[42;37m Ready! \33[0m")
 

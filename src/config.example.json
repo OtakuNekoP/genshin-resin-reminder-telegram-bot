@@ -6,10 +6,11 @@
   "api_id": 123456,
   "api_hash": "1234567890abcdefghijklmnopqrstuvwxyz",
   "bot_username": "genshin_bot",
-  "resin_cron_hours": "11-23",
+  "checkall_cron_hours": "11-23",
   "reward_cron_hour": 1,
   "reward_cron_minute": 10,
   "resin_warning_limit": 160,
+  "coin_warning_limit": 2000,
   "tg_chat_id": 123456,
   "user_data": {
     "dummy0": {
